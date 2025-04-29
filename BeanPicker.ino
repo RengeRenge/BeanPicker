@@ -18,7 +18,7 @@ const int servoPin = 9;  // 舵机 D9 (Timer1)
 
 // 初始化传感器对象（推荐参数：积分时间2.4ms，增益4x）
 Adafruit_TCS34725 tcs =
-    Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_24MS, TCS34725_GAIN_4X);
+  Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_24MS, TCS34725_GAIN_4X);
 
 enum Color {
   RED = 0,
@@ -33,10 +33,10 @@ enum Color {
 Color lastGetColor = UNKNOWN;
 unsigned long lastGetColorTime = 0;
 unsigned long lastReadTime = 0;
-unsigned long T = 852;
+unsigned long T = 885;
 const uint16_t readInterval = 24 + 5;  // 24ms积分 + 5ms缓冲
 
-const int SampleCount = 8;
+const int SampleCount = 6;
 int sampleIndex = 0;
 uint8_t sampleR[SampleCount];
 uint8_t sampleG[SampleCount];
@@ -63,24 +63,28 @@ bool between(float v, float start, float end) {
   return v <= end && v >= start;
 }
 
+bool between_rrggbb(uint16_t r, uint16_t g, uint16_t b, float r1, float r2, float g1, float g2, float b1, float b2) {
+  return between(r, r1, r2) && between(g, g1, g2) && between(b, b1, b2);
+}
+
+
 Color detectColor(uint16_t r, uint16_t g, uint16_t b) {
-  if (between(r, 100, 106) && between(g, 96, 92) && between(b, 65, 67)) {  // 110 89 62 橙色 - 107 91 65
-    return RED;
-  } else if (between(r, 103, 120) && between(g, 85, 93) && between(b, 57, 64)) { 
-    return ORANGE; // between(r, 105, 120) && between(g, 85, 93) && between(b, 57, 63)
+  if ((between(r, 105, 109) && between(g, 90, 93) && between(b, 64, 65)) || 
+  (between(r, 107, 107) && between(g, 95, 95) && between(b, 67, 67)) || 
+  (between(r, 105, 105) && between(g, 93, 93) && between(b, 66, 66)) || 
+  (between(r, 103, 104) && between(g, 93, 95) && between(b, 65, 66)) || 
+  (between(r, 101, 102) && between(g, 95, 93) && between(b, 66, 67))) {
+    return RED;//106 93 65
+  } else if (between_rrggbb(r, g, b, 116, 120, 84, 87, 57, 59) || between_rrggbb(r, g, b, 107, 110, 90, 92, 61, 62) || between_rrggbb(r, g, b, 114, 115, 87, 88, 59, 60)
+  || between_rrggbb(r, g, b, 111, 111, 89, 90, 61, 61) || between_rrggbb(r, g, b, 114, 114, 90, 90, 62, 62) || between_rrggbb(r, g, b, 105, 105, 92, 92, 63, 63)) {
+    return ORANGE;
   } else if (between(r, 100, 107) && between(g, 96, 98) && between(b, 55, 61)) {
     return YELLOW;
-  } else if (between(r, 85, 94) && between(g, 104, 110) && between(b, 60, 73)) {
+  } else if (between(r, 85, 88) && between(g, 103, 108) && between(b, 65, 71)) {
     return GREEN;
-  } else if (between(r, 80, 85) && between(g, 101, 104) && between(b, 76, 81)) {
+  } else if (between(r, 78, 85) && between(g, 101, 103) && between(b, 76, 81)) {
     return BLUE;
-    // } else if (between(r, 85, 87) && between(g, 101, 102) && between(b, 70,
-    // 71)) {  // 85 102 71 - 86 101 70 - 87 102 70 - 87 102 71
-    //   return BROWN;
-  } else if ((r == 85 && g == 102 && b == 71) ||
-             (r == 86 && g == 101 && b == 70) ||
-             (r == 87 && g == 102 && b == 70) ||
-             (r == 87 && g == 102 && b == 71)) {
+  } else if ((r == 85 && g == 102 && b == 71) || (r == 86 && g == 101 && b == 70) || (r == 87 && g == 102 && b == 70) || (r == 87 && g == 102 && b == 71)) {
     return BROWN;
   }
   return UNKNOWN;
@@ -100,10 +104,10 @@ void controlBeanWithColorH(Color h) {
       tServoDeg = 60;
       break;
     case GREEN:
-      tServoDeg = 120;
+      tServoDeg = 135;
       break;
     case BLUE:
-      tServoDeg = 150;
+      tServoDeg = 175;
       break;
     default:
       tServoDeg = 90;
@@ -250,17 +254,22 @@ void readRGB() {
   unsigned long now = millis();
   switch (color) {
     case BROWN:
-    case UNKNOWN: {
-      if (now - lastGetColorTime > T*1.1) {
-        controlBeanWithColorH(color);
+    case UNKNOWN:
+      {
+        if (now - lastGetColorTime > T * 1.1) {
+          controlBeanWithColorH(color);
+        }
+        break;
       }
-      break;
-    }
-    default: {
-      lastGetColorTime = now;
-      lastGetColor = color;
-      break;
-    }
+    default:
+      {
+        if ((lastGetColor == RED || lastGetColor == ORANGE) && now - lastGetColorTime <= T * 0.75) {
+          return;
+        }
+        lastGetColorTime = now;
+        lastGetColor = color;
+        break;
+      }
   }
 }
 
@@ -273,7 +282,8 @@ void setup() {
 
   if (!tcs.begin()) {
     Serial.println("could not find TCS34725");
-    while (1);  // 停止程序
+    while (1)
+      ;  // 停止程序
   }
 }
 
