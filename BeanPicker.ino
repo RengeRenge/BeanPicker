@@ -33,7 +33,7 @@ enum Color {
 Color lastGetColor = UNKNOWN;
 unsigned long lastGetColorTime = 0;
 unsigned long lastReadTime = 0;
-unsigned long T = 885;
+unsigned long T = 791;
 const uint16_t readInterval = 24 + 5;  // 24ms积分 + 5ms缓冲
 
 const int SampleCount = 6;
@@ -67,22 +67,19 @@ bool between_rrggbb(uint16_t r, uint16_t g, uint16_t b, float r1, float r2, floa
   return between(r, r1, r2) && between(g, g1, g2) && between(b, b1, b2);
 }
 
-
 Color detectColor(uint16_t r, uint16_t g, uint16_t b) {
-  if ((between(r, 105, 109) && between(g, 90, 93) && between(b, 64, 65)) || 
-  (between(r, 107, 107) && between(g, 95, 95) && between(b, 67, 67)) || 
-  (between(r, 105, 105) && between(g, 93, 93) && between(b, 66, 66)) || 
-  (between(r, 103, 104) && between(g, 93, 95) && between(b, 65, 66)) || 
-  (between(r, 101, 102) && between(g, 95, 93) && between(b, 66, 67))) {
+  if (between_rrggbb(r, g, b, 108, 111, 92, 94, 65, 67) || between_rrggbb(r, g, b, 101, 102, 97, 98, 69, 70) || between_rrggbb(r, g, b, 105, 108, 93, 95, 66, 68)||
+  between_rrggbb(r, g, b, 102, 103, 95, 96, 67, 68)||between_rrggbb(r, g, b, 101, 101, 96, 96, 67, 67)) {
     return RED;//106 93 65
-  } else if (between_rrggbb(r, g, b, 116, 120, 84, 87, 57, 59) || between_rrggbb(r, g, b, 107, 110, 90, 92, 61, 62) || between_rrggbb(r, g, b, 114, 115, 87, 88, 59, 60)
-  || between_rrggbb(r, g, b, 111, 111, 89, 90, 61, 61) || between_rrggbb(r, g, b, 114, 114, 90, 90, 62, 62) || between_rrggbb(r, g, b, 105, 105, 92, 92, 63, 63)) {
+  } else if (between_rrggbb(r, g, b, 116, 123, 84, 87, 57, 61) || between_rrggbb(r, g, b, 107, 110, 90, 94, 61, 65) || between_rrggbb(r, g, b, 114, 115, 87, 89, 58, 61)
+  || between_rrggbb(r, g, b, 111, 111, 89, 91, 61, 63) || between_rrggbb(r, g, b, 113, 114, 90, 90, 61, 62) || between_rrggbb(r, g, b, 105, 105, 92, 93, 63, 63) || 
+  between_rrggbb(r, g, b, 116, 116, 87, 87, 63, 64) || between_rrggbb(r, g, b, 109, 109, 91, 91, 65, 65)) {
     return ORANGE;
-  } else if (between(r, 100, 107) && between(g, 96, 98) && between(b, 55, 61)) {
+  } else if (between(r, 104, 111) && between(g, 94, 98) && between(b, 55, 60) || between(r, 101, 103) && between(g, 97, 99) && between(b, 60, 63)) {
     return YELLOW;
-  } else if (between(r, 85, 88) && between(g, 103, 108) && between(b, 65, 71)) {
+  } else if (between(r, 86, 90) && between(g, 103, 108) && between(b, 65, 71)) {
     return GREEN;
-  } else if (between(r, 78, 85) && between(g, 101, 103) && between(b, 76, 81)) {
+  } else if (between(r, 81, 87) && between(g, 101, 104) && between(b, 76, 86) || between(r, 86, 87) && between(g, 107, 108) && between(b, 83, 85)) {
     return BLUE;
   } else if ((r == 85 && g == 102 && b == 71) || (r == 86 && g == 101 && b == 70) || (r == 87 && g == 102 && b == 70) || (r == 87 && g == 102 && b == 71)) {
     return BROWN;
@@ -104,7 +101,7 @@ void controlBeanWithColorH(Color h) {
       tServoDeg = 60;
       break;
     case GREEN:
-      tServoDeg = 135;
+      tServoDeg = 130;
       break;
     case BLUE:
       tServoDeg = 175;
@@ -276,7 +273,7 @@ void readRGB() {
 void setup() {
   Serial.begin(9600);
   pinMode(motorPin, OUTPUT);
-  analogWrite(motorPin, 128);  // 1.5V 等效 PWM（假设电源 3.7V）
+  analogWrite(motorPin, 140);  // 1.5V 等效 PWM（假设电源 3.7V）
 
   myServo.attach(servoPin);
 
